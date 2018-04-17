@@ -9,8 +9,7 @@ from agent import Agent
 from programs import Programs
 from settings import *
 
-AGENT_PATH = './save/agents/agent_{}_{}.pickle'
-EPISODES = 100
+EPISODES = 10
 
 metrics = logging.getLogger("metrics")
 events = logging.getLogger("events")
@@ -75,7 +74,7 @@ def main():
 
                 # Compute baseline and optimized times.
                 baseline = program.run([0])
-                optimal = program.runtimes.index(min(program.runtimes))
+                optimal = min(program.runtimes)
 
                 one_runtime = program.run(actions[:1])
                 five_runtime = program.run(actions)
@@ -86,11 +85,15 @@ def main():
 
                 # Log results.
                 metrics.info(
-                    f"{feature_set.name}, {program.prog_name}, {program.dataset}, {one_speedup}, {five_speedup}, {agent.step}")
+                    f"{feature_set.name}, {program.prog_name}, {program.dataset},"
+                    f"{baseline:>5f}, {optimal:>5f}, {one_runtime:>5f}, {five_runtime:>5f},"
+                    f"{one_speedup:>5f}, {five_speedup:>5f}, {optimal_speedup:>5f},"
+                    f"{agent.step}"
+                )
                 agent.log_stats("test_1_speedup", one_speedup)
                 agent.log_stats("test_5_speedup", five_speedup)
                 events.info(
-                    f"Agent: {agent.name}, "
+                    f"Program: {program.full_name}"
                     f"baseline: {baseline:>4f}, optimized: {five_runtime:>4f}, "
                     f"diff: {five_speedup:>4f}, "
                     f"flags used: {' '.join(ACTIONS[actions[0]])}"

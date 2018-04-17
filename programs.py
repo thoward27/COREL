@@ -123,13 +123,14 @@ class Program:
             self._compile(ACTIONS[action])
             runtime = self._run()
             heapq.heappush(runtimes, runtime)
+            self.runtimes[action] = runtime
         return heapq.heappop(runtimes)
 
     def _get_runtimes(self) -> None:
         actions = [i for i in range(len(ACTIONS))]
         for action in actions:
             sys.stdout.write(f"\rFinding optimal: {action}/{len(ACTIONS)}")
-            runtime = 0 #  self.run([action])
+            runtime = self.run([action])
             # Save the information for later use.
             self.runtimes.append(runtime)
         sys.stdout.write(f"\r")

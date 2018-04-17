@@ -8,7 +8,6 @@ import random
 from collections import deque
 from datetime import datetime
 
-import numpy as np
 from keras import backend as K, Sequential
 from keras.callbacks import TensorBoard
 from keras.layers import Dense
@@ -147,6 +146,7 @@ class Agent:
         self.__dict__.update(state)
         self.model = self._build_model()
         self._load_weights()
+        self.writer = summary.FileWriter(LOG_DIR)
         return
 
     def _load_weights(self) -> None:

@@ -6,6 +6,9 @@ from itertools import chain, combinations
 
 import numpy as np
 
+LOAD_PROGRAMS = True
+AGENT_PATH = './save/agents/agent_{}_{}.pickle'
+
 
 class Features(Enum):
     STATIC = 0
