@@ -76,15 +76,15 @@ def main():
                 # Compute baseline and optimized times.
                 baseline = program.run([0])
 
-                one_runtime = program.run(actions[0])
+                one_runtime = program.run(actions[:1])
                 five_runtime = program.run(actions)
 
                 one_speedup = baseline / one_runtime
                 five_speedup = baseline / five_runtime
 
                 # Log results.
-                metrics.info(f"{agent.name}, one_shot, {one_speedup}, {agent.step}")
-                metrics.info(f"{agent.name}, five_shot, {five_speedup}, {agent.step}")
+                metrics.info(
+                    f"{feature_set.name}, {program.prog_name}, {program.dataset}, {one_speedup}, {five_speedup}, {agent.step}")
                 agent.log_stats("test_1_speedup", one_speedup)
                 agent.log_stats("test_5_speedup", five_speedup)
                 events.info(
