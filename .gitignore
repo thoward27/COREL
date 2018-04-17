@@ -1,7 +1,17 @@
+# Latex Files
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Pycharm files
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+save/*
 
 # C extensions
 *.so
@@ -23,6 +33,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+venv/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -30,9 +41,10 @@ var/
 *.manifest
 *.spec
 
-# Installer logs
+# Logs
 pip-log.txt
 pip-delete-this-directory.txt
+tf_logs/*
 
 # Unit test / coverage reports
 htmlcov/
