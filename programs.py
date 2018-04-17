@@ -17,7 +17,6 @@ import sys
 from csv import reader
 from pickle import dump, load
 from subprocess import run, PIPE
-from typing import List, Any
 
 from settings import *
 
@@ -163,12 +162,11 @@ class Benchmark:
         self.ROOT_DIR = None
         return
 
-    def get_programs(self, create_dirs=False) -> []:
+    def get_programs(self, create_dirs=True) -> []:
         """ Returns an array of programs, annotated with static and dynamic features. """
         if create_dirs:
             self._remove_dirs()
             self._create_dirs()
-            self._compile_all()
 
         # Collect required paths.
         self._collect_paths()
