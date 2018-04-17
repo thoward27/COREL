@@ -1,0 +1,25 @@
+#! /bin/sh
+
+for i in *
+do
+
+if [ -d "$i" ] 
+then
+ tmp=$PWD
+ cd $i
+ if [ -d "src" ] 
+ then
+  # *** process directory ***
+  echo $i
+  cp -rf src src_work
+  cd src_work
+  cp ../../mica.conf ./mica.conf
+  cp ../../itypes_default.spec ./itypes_default.spec
+  sed -i 's/-lm \*.o/\*.o -lm/g' Makefile.gcc
+  # *************************
+ fi
+ cd $tmp
+fi
+
+done
+
