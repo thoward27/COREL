@@ -1,3 +1,6 @@
+# cBench Working files
+src_work/
+
 # Latex Files
 *.aux
 *.fdb_latexmk
