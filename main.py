@@ -75,12 +75,14 @@ def main():
 
                 # Compute baseline and optimized times.
                 baseline = program.run([0])
+                optimal = program.runtimes.index(min(program.runtimes))
 
                 one_runtime = program.run(actions[:1])
                 five_runtime = program.run(actions)
 
                 one_speedup = baseline / one_runtime
                 five_speedup = baseline / five_runtime
+                optimal_speedup = baseline / optimal
 
                 # Log results.
                 metrics.info(

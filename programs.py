@@ -43,7 +43,7 @@ class Program:
         self.path = path
         self.str_run = str_run
         self.str_compile = str_compile
-        self.filename = f"{SAVE_PROGRAMS}/{self.full_name}"
+        self.filename = f"{SAVE_PROGRAMS}/{self.full_name}.pickle"
 
         # Internal State.
         self.baseline = 0
