@@ -8,6 +8,7 @@ import numpy as np
 
 LOAD_PROGRAMS = True
 AGENT_PATH = './save/agents/agent_{}_{}.pickle'
+C_BENCH = './cBench'
 
 
 class Features(Enum):
@@ -74,3 +75,6 @@ LOG_CONFIG = {
 }
 
 logging.config.dictConfig(LOG_CONFIG)
+
+events = logging.getLogger("events")
+metrics = logging.getLogger("metrics")

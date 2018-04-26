@@ -2,7 +2,7 @@
 Constructs graph, trains model, evaluates.
 
 """
-
+import random
 from pickle import dump, load
 
 from agent import Agent
@@ -11,14 +11,11 @@ from settings import *
 
 EPISODES = 10
 
-metrics = logging.getLogger("metrics")
-events = logging.getLogger("events")
-
 
 def main():
     # Load Programs.
     programs = Programs()
-    action_size = programs.num_actions
+    action_size = len(ACTIONS)
 
     for feature_set in Features:
         events.info(feature_set.name)
@@ -27,24 +24,26 @@ def main():
         state_size = len(programs.programs[0].features[feature_set])
 
         for p in programs.programs_names:
-            events.info(f"Withholding {p}")
+            # TODO: Multi-thread the following loop.
+
+            events.info("Withholding: " + p)
 
             # Split the programs, load or build an agent.
-            programs.split_programs(p)
+            progs = programs.filter(p)
 
             agent_path = AGENT_PATH.format(feature_set.name, p)
             try:
                 with open(agent_path, 'rb') as a:
                     agent = load(a)
             except FileNotFoundError:
-                agent = Agent(state_size, action_size, name=f"{feature_set.name}_{p}")
+                agent = Agent(state_size, action_size, name="{}_{}".format(feature_set.name, p))
 
             agent.epsilon = 1
 
             # Each agent gets to try EPISODES times.
             for e in range(EPISODES + 1):
-                program = programs.get_program()
-                context = program.get_context(feature_set)
+                program = random.choice(progs['training'])
+                context = program.context(feature_set)
                 actions = agent.act(context)
 
                 try:
@@ -57,16 +56,16 @@ def main():
                     events.exception("Programs failed, please check reports.")
 
                 if not e % 10:
-                    events.info(f"Agent step {agent.step:>6d}: speedup {speedup:>4f}")
+                    events.info("Agent step {:>6d}: speedup {:>4f}".format(agent.step, speedup))
 
             # Save the agent.
             with open(agent_path, 'wb') as a:
                 dump(agent, a)
 
-            events.info(f"Testing against {p}")
-            for program in programs.test:
+            events.info("Testing against " + p)
+            for program in progs['testing']:
                 # Gather context for each program in testing.
-                context = program.get_context(feature_set)
+                context = program.context(feature_set)
 
                 # Set agent exploration to 0, and predict flags.
                 agent.epsilon = 0
@@ -83,20 +82,27 @@ def main():
                 five_speedup = baseline / five_runtime
                 optimal_speedup = baseline / optimal
 
-                # Log results.
+                # Report Results
                 metrics.info(
-                    f"{feature_set.name}, {program.prog_name}, {program.dataset},"
-                    f"{baseline:>5f}, {optimal:>5f}, {one_runtime:>5f}, {five_runtime:>5f},"
-                    f"{one_speedup:>5f}, {five_speedup:>5f}, {optimal_speedup:>5f},"
-                    f"{agent.step}"
+                    "{}, {}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {}",
+                    feature_set.name,
+                    program.full_name,
+                    baseline,
+                    optimal,
+                    one_runtime,
+                    five_runtime,
+                    one_speedup,
+                    five_speedup,
+                    optimal_speedup,
+                    agent.step
                 )
-                agent.log_stats("test_1_speedup", one_speedup)
-                agent.log_stats("test_5_speedup", five_speedup)
                 events.info(
-                    f"Program: {program.full_name}"
-                    f"baseline: {baseline:>4f}, optimized: {five_runtime:>4f}, "
-                    f"diff: {five_speedup:>4f}, "
-                    f"flags used: {' '.join(ACTIONS[actions[0]])}"
+                    "Program: {}; Baseline: {:>4f}; Optimized: {:>4f}; Diff: {:>4f}; Flags Used: {}",
+                    program.full_name,
+                    baseline,
+                    five_runtime,
+                    five_speedup,
+                    ' '.join(ACTIONS[actions[0]])
                 )
 
 
