@@ -58,7 +58,7 @@ class Program:
     def run(self, actions: list) -> float:
         """ Runs the program.
 
-        :param actions: The compile flags to be used, separated by spaces, as a string.
+        :param actions: A list of actions to try. Actions are integer indexes corresponding to the ACTIONS constant.
         """
         runtimes = []
         for action in actions:
@@ -144,5 +144,5 @@ class Programs:
             # TODO: Multi-thread this.
             events.info("Getting runtimes for " + str(program))
             for i, action in enumerate(ACTIONS):
-                program.runtimes[i] = program.run([' '.join(action)])
+                program.runtimes[i] = program.run([action])
                 events.info("Program {}, runtime: {:>4f}".format(str(program), program.runtimes[i]))
