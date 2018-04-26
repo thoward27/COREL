@@ -48,6 +48,11 @@ class Program:
 
     def context(self, feature_set: Features) -> np.array:
         """ Returns the context of the feature_set. """
+        if self.features[feature_set] is None:
+            raise AttributeError("Features are not present.")
+
+        # The pyTypeChecker merely flags what I've already caught above.
+        # noinspection PyTypeChecker
         return np.reshape(self.features[feature_set], [1, -1])
 
     def run(self, actions: list) -> float:
@@ -139,5 +144,5 @@ class Programs:
             # TODO: Multi-thread this.
             events.info("Getting runtimes for " + str(program))
             for i, action in enumerate(ACTIONS):
-                program.runtimes[i] = 0  # program.run([' '.join(action)])
+                program.runtimes[i] = program.run([' '.join(action)])
                 events.info("Program {}, runtime: {:>4f}".format(str(program), program.runtimes[i]))
