@@ -9,6 +9,7 @@ TODO: Annotate types
 TODO: Complete documentation
 """
 import heapq
+import pickle
 import random
 import re
 import subprocess
@@ -129,6 +130,9 @@ class Programs:
         self.programs_names = {str(p) for p in self.programs}
 
         self._get_runtimes()
+
+        with open('./save/programs.pickle', 'wb') as f:
+            pickle.dump(self.programs, f, pickle.HIGHEST_PROTOCOL)
 
     def filter(self, program_name: str) -> dict:
         """ Filters and returns a dictionary of 'training' and 'testing' programs. """
