@@ -144,5 +144,5 @@ class Programs:
             # TODO: Multi-thread this.
             events.info("Getting runtimes for " + str(program))
             for i, action in enumerate(ACTIONS):
-                program.runtimes[i] = program.run([action])
-                events.info("Program {}, runtime: {:>4f}".format(str(program), program.runtimes[i]))
+                program.runtimes[i] = program.run([i])
+                events.info("Program {}, runtime: {:>4f}, flags: {}".format(str(program), program.runtimes[i], action))
