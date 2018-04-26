@@ -9,6 +9,9 @@ import numpy as np
 LOAD_PROGRAMS = True
 AGENT_PATH = './save/agents/agent_{}_{}.pickle'
 C_BENCH = './cBench'
+PIN = '/home/tom/Documents/pin34/pin'
+MICA = '/home/tom/Documents/pin34/source/tools/MICA-master/obj-intel64/mica.so'
+SAVE_PROGRAMS = './save/programs/'
 
 
 class Features(Enum):
@@ -78,3 +81,11 @@ logging.config.dictConfig(LOG_CONFIG)
 
 events = logging.getLogger("events")
 metrics = logging.getLogger("metrics")
+
+metrics.info(
+    "feature_set, program, "
+    "baseline, optimal, "
+    "one_runtime, five_runtime, "
+    "one_speedup, five_speedup, optimal_speedup, "
+    "step"
+)

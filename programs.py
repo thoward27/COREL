@@ -18,11 +18,6 @@ from settings import *
 # Seed our random generator
 random.seed()
 
-# Class-Wide Constants
-PIN = '/home/tom/Documents/pin34/pin'
-MICA = '/home/tom/Documents/pin34/source/tools/MICA-master/obj-intel64/mica.so'
-SAVE_PROGRAMS = './save/programs/'
-
 
 class Program:
     """ A single executable program.
@@ -74,7 +69,7 @@ class Program:
             stdout=subprocess.PIPE
         )
         if not result.returncode == 0:
-            events.error(f"Failed to compile {self.full_name}")
+            events.error("Failed to compile " + self.full_name)
             raise OSError("Failed to compile")
 
     def _run(self) -> float:
@@ -87,7 +82,7 @@ class Program:
         )
 
         if not result.returncode == 0:
-            events.error(f"Failed to run {self.full_name}")
+            events.error("Failed to run " + self.full_name)
 
         result = result.stderr.decode('utf-8')
         m = re.search(

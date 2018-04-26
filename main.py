@@ -80,29 +80,31 @@ def main():
 
                 one_speedup = baseline / one_runtime
                 five_speedup = baseline / five_runtime
-                optimal_speedup = baseline / optimal
+                optimal_speedup = (baseline / optimal) if optimal else 0
 
                 # Report Results
                 metrics.info(
-                    "{}, {}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {}",
-                    feature_set.name,
-                    program.full_name,
-                    baseline,
-                    optimal,
-                    one_runtime,
-                    five_runtime,
-                    one_speedup,
-                    five_speedup,
-                    optimal_speedup,
-                    agent.step
+                    "{}, {}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {}".format(
+                        feature_set.name,
+                        program.full_name,
+                        baseline,
+                        optimal,
+                        one_runtime,
+                        five_runtime,
+                        one_speedup,
+                        five_speedup,
+                        optimal_speedup,
+                        agent.step
+                    )
                 )
                 events.info(
-                    "Program: {}; Baseline: {:>4f}; Optimized: {:>4f}; Diff: {:>4f}; Flags Used: {}",
-                    program.full_name,
-                    baseline,
-                    five_runtime,
-                    five_speedup,
-                    ' '.join(ACTIONS[actions[0]])
+                    "Program: {}; Baseline: {:>4f}; Optimized: {:>4f}; Diff: {:>4f}; Flags Used: {}".format(
+                        program.full_name,
+                        baseline,
+                        five_runtime,
+                        five_speedup,
+                        ' '.join(ACTIONS[actions[0]])
+                    )
                 )
 
 

@@ -43,7 +43,7 @@ def _collect_paths():
                         name=str(path.split('/')[2]),
                         dataset=str(i),
                         path=path,
-                        run=f"./__run {i} {LOOPS}",  # 75 == Number of loops to do.
+                        run="./__run {} {}".format(i, LOOPS),  # 75 == Number of loops to do.
                         compile="export CCC_OPTS='-w {}'; ./__compile gcc",
                     )
                 )
@@ -84,7 +84,12 @@ def _generate_dynamic():
     TODO: Generate dynamic features.
     """
     for program in programs:
-        results = run(f"{PIN} -t {MICA} -- ./__run 1", cwd=program['path'], shell=True, stdout=PIPE, stderr=PIPE)
+        results = run(
+            "{} -t {} -- ./__run 1".format(PIN, MICA),
+            cwd=program['path'],
+            shell=True,
+            stdout=PIPE,
+            stderr=PIPE)
         if not results.returncode == 0:
             events.error(results.stdout)
             events.error("Feature collection failed")

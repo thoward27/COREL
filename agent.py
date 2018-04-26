@@ -18,11 +18,8 @@ from tensorflow import Tensor, summary
 from settings import *
 
 NOW = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-LOG_DIR = os.path.abspath(os.path.join("./tf_logs/", f"run-{NOW}"))
+LOG_DIR = os.path.abspath(os.path.join("./tf_logs/", "run-{}".format(NOW)))
 TB_CALLBACK = TensorBoard(log_dir=LOG_DIR, histogram_freq=0, write_graph=False, write_images=False)
-
-events = logging.getLogger("events")
-metrics = logging.getLogger("metrics")
 
 
 class Agent:
@@ -98,7 +95,7 @@ class Agent:
 
     def log_stats(self, tag, value):
         """ Logs relevant statistics to TensorBoard. """
-        stat = Summary(value=[Summary.Value(tag=f"{self.name}_{tag}", simple_value=value)])
+        stat = Summary(value=[Summary.Value(tag="{}_{}".format(self.name, tag), simple_value=value)])
         self.writer.add_summary(stat, self.step)
         self.writer.flush()
         return
