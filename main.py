@@ -9,7 +9,7 @@ from agent import Agent
 from programs import Programs
 from settings import *
 
-EPISODES = 10
+EPISODES = 100
 
 
 def main():

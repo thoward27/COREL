@@ -12,6 +12,7 @@ import heapq
 import random
 import re
 import subprocess
+from multiprocessing import Process
 
 from settings import *
 
@@ -45,6 +46,12 @@ class Program:
 
     def __str__(self):
         return self.full_name
+
+    def fill_runtimes(self):
+        """ Fills all run times. """
+        for i, action in enumerate(ACTIONS):
+            self.runtimes[i] = self.run([' '.join(action)])
+            events.info("Program {}, runtime: {:>4f}".format(self.full_name, self.runtimes[i]))
 
     def context(self, feature_set: Features) -> np.array:
         """ Returns the context of the feature_set. """
@@ -122,11 +129,15 @@ class Programs:
     def __init__(self):
         self.programs = []
 
+        # Load programs.
         from cbench import programs
         self.programs.extend(programs())
 
+        # Filter for validity.
         self.programs = [p for p in self.programs if p.valid()]
-        self.programs_names = {str(p) for p in self.programs}
+
+        # Create a set of the names
+        self.programs_names = {p.name for p in self.programs}
 
         self._get_runtimes()
 
@@ -136,13 +147,13 @@ class Programs:
             'training': [],
             'testing': []
         }
-        [(ret['testing'] if str(p) == program_name else ret['training']).append(p) for p in self.programs]
+        [(ret['testing'] if p.name == program_name else ret['training']).append(p) for p in self.programs]
         return ret
 
     def _get_runtimes(self):
         for program in self.programs:
             # TODO: Multi-thread this.
             events.info("Getting runtimes for " + str(program))
-            for i, action in enumerate(ACTIONS):
-                program.runtimes[i] = program.run([' '.join(action)])
-                events.info("Program {}, runtime: {:>4f}".format(str(program), program.runtimes[i]))
+            p = Process(target=program.fill_runtimes())
+            p.start()
+        p.join()
