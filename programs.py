@@ -48,7 +48,7 @@ class Program:
         # Internal State.
         self.baseline = 0
         self.optimal = 0
-        self.runtimes = []
+        self.runtimes = [0 for _ in range(len(ACTIONS))]
         # One set of static, dynamic and hybrid are separated by dataset.
         self.features = {
             Features.STATIC: [],
@@ -102,7 +102,6 @@ class Program:
 
         if not result.returncode == 0:
             events.error(f"Failed to run {self.full_name}")
-            raise OSError("Failed to run")
 
         result = result.stderr.decode('utf-8')
         m = re.search(
