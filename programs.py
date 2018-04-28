@@ -14,7 +14,7 @@ import random
 import re
 import shlex
 import subprocess
-from threading import Thread
+from multiprocessing import Process
 
 from settings import *
 
@@ -113,6 +113,7 @@ class Program:
     def get_runtimes(self):
         for i, _ in enumerate(ACTIONS):
             self.runtimes[i] = self.run([i])
+            break  # TODO: remove
 
     @staticmethod
     def _compute_time(group):
@@ -141,19 +142,16 @@ class Programs:
     """ A container of programs. """
 
     def __init__(self):
-        try:
-            with open('save/programs.pickle', 'rb') as f:
-                self.programs = pickle.load(f)
-        except FileNotFoundError:
-            self.programs = []
+        self.programs = []
 
-            from cbench import programs
-            self.programs.extend(programs())
-
-            self._get_runtimes()
+        from cbench import programs
+        self.programs.extend(programs())
 
         self.programs = [p for p in self.programs if p.valid()]
+        self.datasets = {p.dataset for p in self.programs}
         self.programs_names = {str(p) for p in self.programs}
+
+        self._get_runtimes()
 
         with open('./save/programs2.pickle', 'wb') as f:
             pickle.dump(self.programs, f, pickle.HIGHEST_PROTOCOL)
@@ -168,7 +166,8 @@ class Programs:
         return ret
 
     def _get_runtimes(self):
-        events.info("Getting runtimes")
-        threads = [Thread(target=p.get_runtimes, name=p.full_name) for p in self.programs[:1]]
-        [thread.start() for thread in threads]
-        [thread.join() for thread in threads]
+        for count, set in enumerate(self.datasets):
+            events.info("Getting runtimes for dataset: %s/%s" % (count, len(self.datasets)))
+            threads = [Process(target=p.get_runtimes, name=p.full_name) for p in self.programs if p.dataset == set]
+            [thread.start() for thread in threads]
+            [thread.join() for thread in threads]
