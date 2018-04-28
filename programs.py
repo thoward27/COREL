@@ -9,10 +9,12 @@ TODO: Annotate types
 TODO: Complete documentation
 """
 import heapq
+import pickle
 import random
 import re
+import shlex
 import subprocess
-from multiprocessing import Process
+from threading import Thread
 
 from settings import *
 
@@ -34,9 +36,7 @@ class Program:
 
         self.full_name = "{}_{}_{}".format(self.benchmark, self.name, self.dataset)
 
-        self.baseline = 0
-        self.optimal = 0
-        self.runtimes = [0 for _ in range(len(ACTIONS))]
+        self.runtimes = [0.0 for _ in range(len(ACTIONS))]
         self.features = {
             Features.STATIC: None,
             Features.DYNAMIC: None,
@@ -47,12 +47,6 @@ class Program:
     def __str__(self):
         return self.full_name
 
-    def fill_runtimes(self):
-        """ Fills all run times. """
-        for i, action in enumerate(ACTIONS):
-            self.runtimes[i] = self.run([' '.join(action)])
-            events.info("Program {}, runtime: {:>4f}".format(self.full_name, self.runtimes[i]))
-
     def context(self, feature_set: Features) -> np.array:
         """ Returns the context of the feature_set. """
         if self.features[feature_set] is None:
@@ -62,10 +56,18 @@ class Program:
         # noinspection PyTypeChecker
         return np.reshape(self.features[feature_set], [1, -1])
 
+    def valid(self):
+        """ Boolean validation. """
+        return all([
+            self.features[Features.STATIC] is not None,
+            self.features[Features.DYNAMIC] is not None,
+            self.features[Features.HYBRID] is not None
+        ])
+
     def run(self, actions: list) -> float:
         """ Runs the program.
 
-        :param actions: The compile flags to be used, separated by spaces, as a string.
+        :param actions: A list of actions to try. Actions are integer indexes corresponding to the ACTIONS constant.
         """
         runtimes = []
         for action in actions:
@@ -75,8 +77,8 @@ class Program:
 
     def _compile(self, flags: str):
         result = subprocess.run(
-            self._str_compile.format(flags),
-            shell=True,
+            shlex.split(self._str_compile.format(flags)),
+            shell=False,
             cwd=self._path,
             stdout=subprocess.PIPE
         )
@@ -86,8 +88,8 @@ class Program:
 
     def _run(self) -> float:
         result = subprocess.run(
-            self._str_run,
-            shell=True,
+            shlex.split(self._str_run),
+            shell=False,
             cwd=self._path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -108,38 +110,53 @@ class Program:
 
         return user_time + syst_time
 
+    def get_runtimes(self):
+        for i, _ in enumerate(ACTIONS):
+            self.runtimes[i] = self.run([i])
+
     @staticmethod
     def _compute_time(group):
         time = group.split('m')
         time = float(time[0]) * 60 + float(time[1])
         return time
 
-    def valid(self):
-        """ Boolean validation. """
-        return all([
-            self.features[Features.STATIC] is not None,
-            self.features[Features.DYNAMIC] is not None,
-            self.features[Features.HYBRID] is not None
-        ])
+    @property
+    def baseline(self):
+        """ Returns a safe baseline. """
+        if not self.runtimes[0]:
+            self.baseline = self.run([0])
+        return self.runtimes[0]
+
+    @baseline.setter
+    def baseline(self, value):
+        self.runtimes[0] = value
+
+    @property
+    def optimal(self):
+        """ Return the optimal. """
+        return max(min(self.runtimes), 0.00000001)
 
 
 class Programs:
     """ A container of programs. """
 
     def __init__(self):
-        self.programs = []
+        try:
+            with open('save/programs.pickle', 'rb') as f:
+                self.programs = pickle.load(f)
+        except FileNotFoundError:
+            self.programs = []
 
-        # Load programs.
-        from cbench import programs
-        self.programs.extend(programs())
+            from cbench import programs
+            self.programs.extend(programs())
 
-        # Filter for validity.
+            self._get_runtimes()
+
         self.programs = [p for p in self.programs if p.valid()]
+        self.programs_names = {str(p) for p in self.programs}
 
-        # Create a set of the names
-        self.programs_names = {p.name for p in self.programs}
-
-        self._get_runtimes()
+        with open('./save/programs2.pickle', 'wb') as f:
+            pickle.dump(self.programs, f, pickle.HIGHEST_PROTOCOL)
 
     def filter(self, program_name: str) -> dict:
         """ Filters and returns a dictionary of 'training' and 'testing' programs. """
@@ -147,13 +164,11 @@ class Programs:
             'training': [],
             'testing': []
         }
-        [(ret['testing'] if p.name == program_name else ret['training']).append(p) for p in self.programs]
+        [(ret['testing'] if str(p) == program_name else ret['training']).append(p) for p in self.programs]
         return ret
 
     def _get_runtimes(self):
-        for program in self.programs:
-            # TODO: Multi-thread this.
-            events.info("Getting runtimes for " + str(program))
-            p = Process(target=program.fill_runtimes())
-            p.start()
-        p.join()
+        events.info("Getting runtimes")
+        threads = [Thread(target=p.get_runtimes, name=p.full_name) for p in self.programs[:1]]
+        [thread.start() for thread in threads]
+        [thread.join() for thread in threads]

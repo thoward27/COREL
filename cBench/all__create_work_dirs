@@ -16,6 +16,7 @@ then
   cp ../../mica.conf ./mica.conf
   cp ../../itypes_default.spec ./itypes_default.spec
   sed -i 's/-lm \*.o/\*.o -lm/g' Makefile.gcc
+  cp Makefile.gcc Makefile
   # *************************
  fi
  cd $tmp

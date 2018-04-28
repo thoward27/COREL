@@ -44,7 +44,7 @@ def _collect_paths():
                         dataset=str(i),
                         path=path,
                         run="./__run {} {}".format(i, LOOPS),  # 75 == Number of loops to do.
-                        compile="export CCC_OPTS='-w {}'; ./__compile gcc",
+                        compile="make CCC_OPTS='-w {}'",
                     )
                 )
     return

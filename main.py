@@ -73,7 +73,7 @@ def main():
 
                 # Compute baseline and optimized times.
                 baseline = program.run([0])
-                optimal = min(program.runtimes)
+                optimal = program.optimal
 
                 one_runtime = program.run(actions[:1])
                 five_runtime = program.run(actions)
