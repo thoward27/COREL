@@ -9,7 +9,7 @@ from agent import Agent
 from programs import Programs
 from settings import *
 
-EPISODES = 10
+EPISODES = 100
 
 
 def main():
@@ -73,7 +73,7 @@ def main():
 
                 # Compute baseline and optimized times.
                 baseline = program.run([0])
-                optimal = min(program.runtimes)
+                optimal = program.optimal
 
                 one_runtime = program.run(actions[:1])
                 five_runtime = program.run(actions)
