@@ -14,7 +14,7 @@ import random
 import re
 import shlex
 import subprocess
-from multiprocessing import Process
+from threading import Thread
 
 from settings import *
 
@@ -113,7 +113,6 @@ class Program:
     def get_runtimes(self):
         for i, _ in enumerate(ACTIONS):
             self.runtimes[i] = self.run([i])
-            break  # TODO: remove
 
     @staticmethod
     def _compute_time(group):
@@ -168,6 +167,6 @@ class Programs:
     def _get_runtimes(self):
         for count, set in enumerate(self.datasets):
             events.info("Getting runtimes for dataset: %s/%s" % (count, len(self.datasets)))
-            threads = [Process(target=p.get_runtimes, name=p.full_name) for p in self.programs if p.dataset == set]
+            threads = [Thread(target=p.get_runtimes, name=p.full_name) for p in self.programs if p.dataset == set]
             [thread.start() for thread in threads]
             [thread.join() for thread in threads]
