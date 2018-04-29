@@ -42,7 +42,8 @@ class Agent:
         self.batch_size = batch_size
         self.name = name
 
-        self.save_weights_path = "./save/agents/agent_weights_{}.h5".format(name)
+        self.save_weights_path = "./save/agents/{}.h5".format(name)
+        self.save_path = AGENT_PATH.format(name)
         self.memory = deque(maxlen=2000)
         self.epsilon = 1.0  # Exploration rate
         self.epsilon_min = 0.001

@@ -23,89 +23,113 @@ def main():
         # State size depends on the feature set in use.
         state_size = len(programs.programs[0].features[feature_set])
 
-        for p in programs.programs_names:
-            # TODO: Multi-thread the following loop.
+        for p_name in programs.programs_names:
+            events.info("Withholding: %s" % p_name)
 
-            events.info("Withholding: " + p)
+            # Setup the programs
+            progs = programs.filter(p_name)
 
-            # Split the programs, load or build an agent.
-            progs = programs.filter(p)
+            # Setup the Agent
 
-            agent_path = AGENT_PATH.format(feature_set.name, p)
-            try:
-                with open(agent_path, 'rb') as a:
-                    agent = load(a)
-            except FileNotFoundError:
-                agent = Agent(state_size, action_size, name="{}_{}".format(feature_set.name, p))
+            agent = load_agent(action_size, feature_set, p_name, state_size)
+            agent.epsilon = 1  # Introduce some randomness via epsilon manipulation.
 
-            agent.epsilon = 1
+            # train_agent(agent, feature_set, progs)
 
-            # Each agent gets to try EPISODES times.
-            for e in range(EPISODES + 1):
-                program = random.choice(progs['training'])
-                context = program.context(feature_set)
-                actions = agent.act(context)
+            save_agent(agent)
 
-                try:
-                    runtime = program.run(actions)
-                    speedup = program.baseline / runtime
+            # test_agent(agent, feature_set, progs)
 
-                    agent.remember(context, actions, runtime)
-                    agent.log_stats("train_speedup", value=speedup)
-                except OSError:
-                    events.exception("Programs failed, please check reports.")
 
-                if not e % 10:
-                    events.info("Agent step {:>6d}: speedup {:>4f}".format(agent.step, speedup))
+def test_agent(agent, feature_set, progs):
+    events.info("Testing against %s" % progs['testing'][0].name)
+    for program in progs['testing']:
+        # Gather context for each program in testing.
+        context = program.context(feature_set)
 
-            # Save the agent.
-            with open(agent_path, 'wb') as a:
-                dump(agent, a)
+        # Set agent exploration to 0, and predict flags.
+        agent.epsilon = 0
+        actions = agent.act(context, num_return=5)
 
-            events.info("Testing against " + p)
-            for program in progs['testing']:
-                # Gather context for each program in testing.
-                context = program.context(feature_set)
+        # Compute baseline and optimized times.
+        baseline = program.baseline
+        optimal = program.optimal
 
-                # Set agent exploration to 0, and predict flags.
-                agent.epsilon = 0
-                actions = agent.act(context, num_return=5)
+        one_runtime = program.run(actions[:1])
+        five_runtime = program.run(actions)
 
-                # Compute baseline and optimized times.
-                baseline = program.run([0])
-                optimal = program.optimal
-
-                one_runtime = program.run(actions[:1])
-                five_runtime = program.run(actions)
-
-                one_speedup = baseline / one_runtime
-                five_speedup = baseline / five_runtime
-                optimal_speedup = (baseline / optimal) if optimal else 0
-
-                # Report Results
-                metrics.info(
-                    "{}, {}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {}".format(
-                        feature_set.name,
-                        program.full_name,
-                        baseline,
-                        optimal,
-                        one_runtime,
-                        five_runtime,
-                        one_speedup,
-                        five_speedup,
-                        optimal_speedup,
-                        agent.step
-                    )
+        try:
+            one_speedup = baseline / one_runtime
+            five_speedup = baseline / five_runtime
+            optimal_speedup = baseline / optimal
+        except ZeroDivisionError:
+            events.exception("ZeroDivision during testing %s" % program.full_name, exc_info=True)
+        else:
+            # Report Results
+            metrics.info(
+                "{}, {}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {:>5f}, {}".format(
+                    feature_set.name,
+                    program.full_name,
+                    baseline,
+                    optimal,
+                    one_runtime,
+                    five_runtime,
+                    one_speedup,
+                    five_speedup,
+                    optimal_speedup,
+                    agent.step
                 )
-                events.info(
-                    "Program: {}; Baseline: {:>4f}; Optimized: {:>4f}; Diff: {:>4f}; Flags Used: {}".format(
-                        program.full_name,
-                        baseline,
-                        five_runtime,
-                        five_speedup,
-                        ' '.join(ACTIONS[actions[0]])
-                    )
+            )
+            events.info(
+                "Program: {}; Baseline: {:>4f}; Optimized: {:>4f}; Diff: {:>4f}; Flags Used: {}".format(
+                    program.full_name,
+                    baseline,
+                    five_runtime,
+                    five_speedup,
+                    ' '.join(ACTIONS[actions[0]])
                 )
+            )
+
+
+def save_agent(agent):
+    """ Save the provided agent to path. """
+    with open(agent.save_path, 'wb') as a:
+        dump(agent, a)
+
+
+def load_agent(action_size, feature_set, p_name, state_size):
+    agent_path = AGENT_PATH.format("%s_%s" % (feature_set.name, p_name))
+    try:
+        with open(agent_path, 'rb') as a:
+            agent = load(a)
+    except FileNotFoundError:
+        agent = Agent(state_size, action_size, name="{}_{}".format(feature_set.name, p_name))
+    return agent
+
+
+def train_agent(agent, feature_set, progs):
+    events.info("Training agent, ")
+    for e in range(EPISODES + 1):
+        program = random.choice(progs['training'])
+        context = program.context(feature_set)
+        actions = agent.act(context)
+
+        try:
+            runtime = program.run(actions)
+            speedup = program.baseline / runtime
+
+        except OSError:
+            events.exception("OSError: %s %s" % (program.full_name, actions), exc_info=True)
+
+        except ZeroDivisionError:
+            events.exception("Runtime was zero.", exc_info=True)
+
+        else:
+            agent.remember(context, actions, runtime)
+            agent.log_stats("train_speedup", value=speedup)
+
+            if not e % 10:
+                events.info("Agent step {:>6d}: speedup {:>4f}".format(agent.step, speedup))
 
 
 if __name__ == "__main__":

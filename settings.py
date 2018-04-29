@@ -7,7 +7,7 @@ from itertools import chain, combinations
 import numpy as np
 
 LOAD_PROGRAMS = True
-AGENT_PATH = './save/agents/agent_{}_{}.pickle'
+AGENT_PATH = './save/agents/{}.pickle'
 C_BENCH = './cBench'
 PIN = '/home/tom/Documents/pin34/pin'
 MICA = '/home/tom/Documents/pin34/source/tools/MICA-master/obj-intel64/mica.so'

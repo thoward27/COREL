@@ -85,6 +85,7 @@ class Program:
         if not result.returncode == 0:
             events.error("Failed to compile " + self.full_name)
             raise OSError("Failed to compile")
+        return
 
     def _run(self) -> float:
         result = subprocess.run(
@@ -111,8 +112,8 @@ class Program:
         return user_time + syst_time
 
     def get_runtimes(self):
-        for i, _ in enumerate(ACTIONS):
-            self.runtimes[i] = self.run([i])
+        #  self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]
+        pass
 
     @staticmethod
     def _compute_time(group):
@@ -148,7 +149,7 @@ class Programs:
 
         self.programs = [p for p in self.programs if p.valid()]
         self.datasets = {p.dataset for p in self.programs}
-        self.programs_names = {str(p) for p in self.programs}
+        self.programs_names = {p.name for p in self.programs}
 
         self._get_runtimes()
 
@@ -161,12 +162,12 @@ class Programs:
             'training': [],
             'testing': []
         }
-        [(ret['testing'] if str(p) == program_name else ret['training']).append(p) for p in self.programs]
+        [(ret['testing'] if p.name == program_name else ret['training']).append(p) for p in self.programs]
         return ret
 
     def _get_runtimes(self):
-        for count, set in enumerate(self.datasets):
-            events.info("Getting runtimes for dataset: %s/%s" % (count, len(self.datasets)))
-            threads = [Thread(target=p.get_runtimes, name=p.full_name) for p in self.programs if p.dataset == set]
+        for count, dset in enumerate(self.datasets):
+            events.info("Getting runtimes for dataset: %s/%s" % (count+1, len(self.datasets)))
+            threads = [Thread(target=p.get_runtimes, name=p.full_name) for p in self.programs if p.dataset == dset]
             [thread.start() for thread in threads]
             [thread.join() for thread in threads]
