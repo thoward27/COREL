@@ -112,8 +112,7 @@ class Program:
         return user_time + syst_time
 
     def get_runtimes(self):
-        #  self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]
-        pass
+        self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]
 
     @staticmethod
     def _compute_time(group):

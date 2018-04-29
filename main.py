@@ -34,11 +34,11 @@ def main():
             agent = load_agent(action_size, feature_set, p_name, state_size)
             agent.epsilon = 1  # Introduce some randomness via epsilon manipulation.
 
-            # train_agent(agent, feature_set, progs)
+            train_agent(agent, feature_set, progs)
 
             save_agent(agent)
 
-            # test_agent(agent, feature_set, progs)
+            test_agent(agent, feature_set, progs)
 
 
 def test_agent(agent, feature_set, progs):
@@ -108,7 +108,7 @@ def load_agent(action_size, feature_set, p_name, state_size):
 
 
 def train_agent(agent, feature_set, progs):
-    events.info("Training agent, ")
+    events.info("Training agent %s" % agent.name)
     for e in range(EPISODES + 1):
         program = random.choice(progs['training'])
         context = program.context(feature_set)
