@@ -112,20 +112,23 @@ def train_agent(agent, feature_set, progs):
     for e in range(EPISODES + 1):
         program = random.choice(progs['training'])
         context = program.context(feature_set)
-        actions = agent.act(context)
+        action = agent.act(context)
 
         try:
-            runtime = program.run(actions)
+            runtime = program.run(action)
             speedup = program.baseline / runtime
 
         except OSError:
-            events.exception("OSError: %s %s" % (program.full_name, actions), exc_info=True)
+            events.exception("OSError: %s %s" % (program.full_name, action), exc_info=True)
 
         except ZeroDivisionError:
-            events.exception("Runtime was zero.", exc_info=True)
+            events.exception(
+                "Runtime was zero for %s, compiling with %s" % (program.full_name, ' '.join(ACTIONS[action[0]])),
+                exc_info=True
+            )
 
         else:
-            agent.remember(context, actions, runtime)
+            agent.remember(context, action, runtime)
             agent.log_stats("train_speedup", value=speedup)
 
             if not e % 10:
