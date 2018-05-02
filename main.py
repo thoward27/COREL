@@ -15,6 +15,9 @@ EPISODES = 100
 def main():
     # Load Programs.
     programs = Programs()
+    programs.build_runtimes()
+    programs.save()
+
     action_size = len(ACTIONS)
 
     for feature_set in Features:

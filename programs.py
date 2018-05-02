@@ -14,6 +14,7 @@ import random
 import re
 import shlex
 import subprocess
+from decimal import Decimal
 from threading import Thread
 
 from settings import *
@@ -44,6 +45,9 @@ class Program:
         }
         return
 
+    def __repr__(self):
+        return str(self)
+
     def __str__(self):
         return self.full_name
 
@@ -73,7 +77,7 @@ class Program:
         for action in actions:
             self._compile(' '.join(ACTIONS[action]))
             heapq.heappush(runtimes, self._run())
-        return heapq.heappop(runtimes)
+        return max(heapq.heappop(runtimes), 0.0001)
 
     def _compile(self, flags: str):
         result = subprocess.run(
@@ -111,30 +115,26 @@ class Program:
 
         return user_time + syst_time
 
-    def get_runtimes(self):
+    def build_runtimes(self):
         self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]
 
     @staticmethod
     def _compute_time(group):
         time = group.split('m')
-        time = float(time[0]) * 60 + float(time[1])
+        time = Decimal(time[0]) * 60 + Decimal(time[1])
         return time
 
     @property
     def baseline(self):
         """ Returns a safe baseline. """
         if not self.runtimes[0]:
-            self.baseline = self.run([0])
-        return self.runtimes[0]
-
-    @baseline.setter
-    def baseline(self, value):
-        self.runtimes[0] = value
+            self.runtimes[0] = self.run([0])
+        return max(self.runtimes[0], 0.0001)
 
     @property
     def optimal(self):
         """ Return the optimal. """
-        return max(min(self.runtimes), 0.00000001)
+        return max(min(self.runtimes), 0.0001)
 
 
 class Programs:
@@ -150,10 +150,16 @@ class Programs:
         self.datasets = {p.dataset for p in self.programs}
         self.programs_names = {p.name for p in self.programs}
 
-        self._get_runtimes()
+        self.save()
 
-        with open('./save/programs2.pickle', 'wb') as f:
+    def save(self):
+        with open('./save/programs.pickle', 'wb') as f:
             pickle.dump(self.programs, f, pickle.HIGHEST_PROTOCOL)
+
+    def build_runtimes(self):
+        events.info("Building Runtimes.")
+        self._build_runtimes_serial()
+        return
 
     def filter(self, program_name: str) -> dict:
         """ Filters and returns a dictionary of 'training' and 'testing' programs. """
@@ -164,9 +170,13 @@ class Programs:
         [(ret['testing'] if p.name == program_name else ret['training']).append(p) for p in self.programs]
         return ret
 
-    def _get_runtimes(self):
+    def _build_runtimes_threaded(self):
         for count, dset in enumerate(self.datasets):
             events.info("Getting runtimes for dataset: %s/%s" % (count+1, len(self.datasets)))
-            threads = [Thread(target=p.get_runtimes, name=p.full_name) for p in self.programs if p.dataset == dset]
+            threads = [Thread(target=p.build_runtimes, name=p.full_name) for p in self.programs if p.dataset == dset]
             [thread.start() for thread in threads]
             [thread.join() for thread in threads]
+
+    def _build_runtimes_serial(self):
+        for program in self.programs:
+            program.build_runtimes()
