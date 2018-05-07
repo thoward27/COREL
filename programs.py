@@ -109,11 +109,11 @@ class Program:
             result
         )
 
-        # real_time = self._compute_time(m.group('real'))
-        user_time = self._compute_time(m.group('user'))
-        syst_time = self._compute_time(m.group('sys'))
+        # real_time = Decimal(self._compute_time(m.group('real')))
+        user_time = Decimal(self._compute_time(m.group('user')))
+        syst_time = Decimal(self._compute_time(m.group('sys')))
 
-        return Decimal(user_time + syst_time + 0.0001)
+        return user_time + syst_time + Decimal(0.0001)
 
     def build_runtimes(self):
         self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]
