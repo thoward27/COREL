@@ -46,10 +46,13 @@ class Program:
         return
 
     def __repr__(self):
-        return str(self)
+        return self.full_name
 
     def __str__(self):
-        return self.full_name
+        return "{}_{}".format(self.benchmark, self.name)
+
+    def __eq__(self, other):
+        return str(self) == str(other)
 
     def context(self, feature_set: Features) -> np.array:
         """ Returns the context of the feature_set. """
@@ -148,9 +151,13 @@ class Programs:
 
         self.programs = [p for p in self.programs if p.valid()]
         self.datasets = {p.dataset for p in self.programs}
-        self.programs_names = {p.name for p in self.programs}
+        self.names = {str(p) for p in self.programs}
 
         self.save()
+
+    def __iter__(self):
+        for program in self.programs:
+            yield program
 
     def save(self):
         with open('./save/programs.pickle', 'wb') as f:
@@ -167,7 +174,7 @@ class Programs:
             'training': [],
             'testing': []
         }
-        [(ret['testing'] if p.name == program_name else ret['training']).append(p) for p in self.programs]
+        [(ret['testing'] if p == program_name else ret['training']).append(p) for p in self.programs]
         return ret
 
     def _build_runtimes_threaded(self):

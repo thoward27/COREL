@@ -15,38 +15,30 @@ EPISODES = 100
 def main():
     # Load Programs.
     programs = Programs()
-    programs.build_runtimes()
-    programs.save()
-
-    action_size = len(ACTIONS)
+    # programs.build_runtimes()
+    # programs.save()
 
     for feature_set in Features:
         events.info(feature_set.name)
 
-        # State size depends on the feature set in use.
-        state_size = len(programs.programs[0].features[feature_set])
+        for program in programs.names:
+            events.info("Withholding: %s" % program)
 
-        for p_name in programs.programs_names:
-            events.info("Withholding: %s" % p_name)
+            progs = programs.filter(program)
 
-            # Setup the programs
-            progs = programs.filter(p_name)
+            agent = load_agent(progs['testing'][0], feature_set)
 
-            # Setup the Agent
-
-            agent = load_agent(action_size, feature_set, p_name, state_size)
-            agent.epsilon = 1  # Introduce some randomness via epsilon manipulation.
-
-            train_agent(agent, feature_set, progs)
+            train(agent, progs['training'], feature_set)
 
             save_agent(agent)
 
-            test_agent(agent, feature_set, progs)
+            test(agent, progs['testing'], feature_set)
 
 
-def test_agent(agent, feature_set, progs):
-    events.info("Testing against %s" % progs['testing'][0].name)
-    for program in progs['testing']:
+def test(agent, programs, feature_set):
+    events.info("Testing against %s" % programs[0])
+    agent.epsilon = 1
+    for program in programs:
         # Gather context for each program in testing.
         context = program.context(feature_set)
 
@@ -100,20 +92,21 @@ def save_agent(agent):
         dump(agent, a)
 
 
-def load_agent(action_size, feature_set, p_name, state_size):
-    agent_path = AGENT_PATH.format("%s_%s" % (feature_set.name, p_name))
+def load_agent(program, feature_set):
+    agent_path = AGENT_PATH.format("%s_%s" % (feature_set.name, program))
     try:
         with open(agent_path, 'rb') as a:
             agent = load(a)
     except FileNotFoundError:
-        agent = Agent(state_size, action_size, name="{}_{}".format(feature_set.name, p_name))
+        agent = Agent(program, feature_set)
     return agent
 
 
-def train_agent(agent, feature_set, progs):
-    events.info("Training agent %s" % agent.name)
+def train(agent, programs, feature_set):
+    events.info("Training agent %s" % agent)
+    agent.epsilon = 1
     for e in range(EPISODES + 1):
-        program = random.choice(progs['training'])
+        program = random.choice(programs)
         context = program.context(feature_set)
         action = agent.act(context)
 

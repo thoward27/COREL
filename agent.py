@@ -29,21 +29,20 @@ class Agent:
     the contextual bandit problem.
     """
 
-    def __init__(self, state_size: int, action_size: int, *, name: str, batch_size: int = 50):
+    def __init__(self, program, feature_set):
         """ Initialize an Agent.
 
         :rtype: Agent
-        :param state_size: int
-        :param action_size: int
         """
 
-        self.state_size = state_size  # The number of attributes the agent will receive.
-        self.action_size = action_size  # The number of actions available.
-        self.batch_size = batch_size
-        self.name = name
+        self.state_size = len(program.context(feature_set))
+        self.batch_size = 50
+        self.action_size = len(ACTIONS)
 
-        self.save_weights_path = "./save/agents/{}.h5".format(name)
-        self.save_path = AGENT_PATH.format(name)
+        self.name = str(program)
+
+        self.save_weights_path = "./save/agents/{}.h5".format(str(program))
+        self.save_path = AGENT_PATH.format(str(program))
         self.memory = deque(maxlen=2000)
         self.epsilon = 1.0  # Exploration rate
         self.epsilon_min = 0.001
@@ -68,12 +67,12 @@ class Agent:
     def _build_model(self) -> Sequential:
         """ Neural net for deep reinforcement learning. """
         # Compute the average between input and output, as a baseline number of neurons.
-        hidden_neurons = int((self.state_size + self.action_size) / 2)
+        hidden_neurons = int((self.state_size + len(ACTIONS)) / 2)
         # Build the model.
         model = Sequential()
         model.add(Dense(hidden_neurons, input_dim=self.state_size, activation='relu'))
         model.add(Dense(hidden_neurons, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
+        model.add(Dense(len(ACTIONS), activation='linear'))
         model.compile(
             loss=self._loss,
             optimizer=Adam(lr=self.learning_rate),
@@ -108,7 +107,7 @@ class Agent:
         which decays over time.
         """
         if np.random.rand() <= self.epsilon:
-            return np.array([random.randrange(self.action_size)])
+            return np.array([random.randrange(len(ACTIONS))])
 
         act_values = self.model.predict(state)
         actions = np.argsort(act_values[0])[:num_return]
