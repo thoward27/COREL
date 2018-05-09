@@ -67,12 +67,12 @@ class Agent:
     def _build_model(self) -> Sequential:
         """ Neural net for deep reinforcement learning. """
         # Compute the average between input and output, as a baseline number of neurons.
-        hidden_neurons = int((self.state_size + len(ACTIONS)) / 2)
+        hidden_neurons = int((self.state_size + self.action_size) / 2)
         # Build the model.
         model = Sequential()
         model.add(Dense(hidden_neurons, input_dim=self.state_size, activation='relu'))
         model.add(Dense(hidden_neurons, activation='relu'))
-        model.add(Dense(len(ACTIONS), activation='linear'))
+        model.add(Dense(self.action_size, activation='linear'))
         model.compile(
             loss=self._loss,
             optimizer=Adam(lr=self.learning_rate),
@@ -89,7 +89,7 @@ class Agent:
         """
         self.memory.append((state, action, runtime))
         self.step += 1
-        if self.step % 20:
+        if not self.step % 20:
             self.replay()
         return
 
@@ -107,7 +107,7 @@ class Agent:
         which decays over time.
         """
         if np.random.rand() <= self.epsilon:
-            return np.array([random.randrange(len(ACTIONS))])
+            return np.array([random.randrange(self.action_size)])
 
         act_values = self.model.predict(state)
         actions = np.argsort(act_values[0])[:num_return]
@@ -145,6 +145,9 @@ class Agent:
         self._load_weights()
         self.writer = summary.FileWriter(LOG_DIR)
         return
+
+    def __repr__(self):
+        return self.name
 
     def _load_weights(self) -> None:
         """ Load model weights """

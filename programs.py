@@ -80,7 +80,7 @@ class Program:
         for action in actions:
             self._compile(' '.join(ACTIONS[action]))
             heapq.heappush(runtimes, self._run())
-        return max(heapq.heappop(runtimes), 0.0001)
+        return heapq.heappop(runtimes)
 
     def _compile(self, flags: str):
         result = subprocess.run(
@@ -116,7 +116,7 @@ class Program:
         user_time = Decimal(self._compute_time(m.group('user')))
         syst_time = Decimal(self._compute_time(m.group('sys')))
 
-        return user_time + syst_time + Decimal(0.0001)
+        return user_time + syst_time + Decimal("0.0001")
 
     def build_runtimes(self):
         self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]

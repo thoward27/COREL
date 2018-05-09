@@ -26,7 +26,8 @@ def main():
 
             progs = programs.filter(program)
 
-            agent = load_agent(progs['testing'][0], feature_set)
+            # agent = load_agent(progs['testing'][0], feature_set)
+            agent = Agent(progs['testing'][0], feature_set)
 
             train(agent, progs['training'], feature_set)
 
