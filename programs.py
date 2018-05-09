@@ -37,7 +37,7 @@ class Program:
 
         self.full_name = "{}_{}_{}".format(self.benchmark, self.name, self.dataset)
 
-        self.runtimes = [0.0 for _ in range(len(ACTIONS))]
+        self.runtimes = [Decimal(0) for _ in range(len(ACTIONS))]
         self.features = {
             Features.STATIC: None,
             Features.DYNAMIC: None,
@@ -63,7 +63,7 @@ class Program:
         # noinspection PyTypeChecker
         return np.reshape(self.features[feature_set], [1, -1])
 
-    def valid(self):
+    def valid(self) -> bool:
         """ Boolean validation. """
         return all([
             self.features[Features.STATIC] is not None,
@@ -71,7 +71,7 @@ class Program:
             self.features[Features.HYBRID] is not None
         ])
 
-    def run(self, actions: list) -> float:
+    def run(self, actions: list) -> Decimal:
         """ Runs the program.
 
         :param actions: A list of actions to try. Actions are integer indexes corresponding to the ACTIONS constant.
@@ -82,7 +82,7 @@ class Program:
             heapq.heappush(runtimes, self._run())
         return heapq.heappop(runtimes)
 
-    def _compile(self, flags: str):
+    def _compile(self, flags: str) -> None:
         result = subprocess.run(
             shlex.split(self._str_compile.format(flags)),
             shell=False,
@@ -94,7 +94,7 @@ class Program:
             raise OSError("Failed to compile")
         return
 
-    def _run(self) -> float:
+    def _run(self) -> Decimal:
         result = subprocess.run(
             shlex.split(self._str_run),
             shell=False,
@@ -113,31 +113,32 @@ class Program:
         )
 
         # real_time = Decimal(self._compute_time(m.group('real')))
-        user_time = Decimal(self._compute_time(m.group('user')))
-        syst_time = Decimal(self._compute_time(m.group('sys')))
+        user_time = self._compute_time(m.group('user'))
+        syst_time = self._compute_time(m.group('sys'))
 
         return user_time + syst_time + Decimal("0.0001")
 
-    def build_runtimes(self):
+    def build_runtimes(self) -> None:
         self.runtimes = [self.run([i]) for i in range(len(ACTIONS))]
+        return
 
     @staticmethod
-    def _compute_time(group):
+    def _compute_time(group) -> Decimal:
         time = group.split('m')
         time = Decimal(time[0]) * 60 + Decimal(time[1])
         return time
 
     @property
-    def baseline(self):
+    def baseline(self) -> Decimal:
         """ Returns a safe baseline. """
         if not self.runtimes[0]:
             self.runtimes[0] = self.run([0])
-        return max(self.runtimes[0], 0.0001)
+        return self.runtimes[0]
 
     @property
-    def optimal(self):
+    def optimal(self) -> Decimal:
         """ Return the optimal. """
-        return max(min(self.runtimes), 0.0001)
+        return min(self.runtimes)
 
 
 class Programs:
@@ -159,11 +160,12 @@ class Programs:
         for program in self.programs:
             yield program
 
-    def save(self):
+    def save(self) -> None:
         with open('./save/programs.pickle', 'wb') as f:
             pickle.dump(self.programs, f, pickle.HIGHEST_PROTOCOL)
+        return
 
-    def build_runtimes(self):
+    def build_runtimes(self) -> None:
         events.info("Building Runtimes.")
         self._build_runtimes_serial()
         return
