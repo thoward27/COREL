@@ -15,8 +15,8 @@ EPISODES = 100
 def main():
     # Load Programs.
     programs = Programs()
-    # programs.build_runtimes()
-    # programs.save()
+    programs.build_runtimes()
+    programs.save()
 
     for feature_set in Features:
         events.info(feature_set.name)
@@ -38,13 +38,11 @@ def main():
 
 def test(agent, programs, feature_set):
     events.info("Testing against %s" % programs[0])
-    agent.epsilon = 1
+    agent.epsilon = 0
     for program in programs:
         # Gather context for each program in testing.
         context = program.context(feature_set)
 
-        # Set agent exploration to 0, and predict flags.
-        agent.epsilon = 0
         actions = agent.act(context, num_return=5)
 
         # Compute baseline and optimized times.
@@ -91,6 +89,7 @@ def save_agent(agent):
     """ Save the provided agent to path. """
     with open(agent.save_path, 'wb') as a:
         dump(agent, a)
+    return
 
 
 def load_agent(program, feature_set):

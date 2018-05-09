@@ -35,7 +35,7 @@ class Agent:
         :rtype: Agent
         """
 
-        self.state_size = len(program.context(feature_set))
+        self.state_size = len(program.features[feature_set])
         self.batch_size = 50
         self.action_size = len(ACTIONS)
 
