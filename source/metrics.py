@@ -2,7 +2,6 @@
 """
 
 import numpy as np
-from keras import backend
 from numpy import argsort
 
 import source.config as c
@@ -97,8 +96,8 @@ def log(results: list, recover=True) -> None:
 
 
 def actual(y_true: np.ndarray, _) -> np.ndarray:
-    return backend.mean(y_true)
+    return np.mean(y_true)
 
 
 def predicted(_, y_pred: np.ndarray) -> np.ndarray:
-    return backend.mean(y_pred)
+    return np.mean(y_pred)
