@@ -48,6 +48,7 @@ venv/*
 pip-log.txt
 pip-delete-this-directory.txt
 tf_logs/*
+mlruns/
 
 # Unit test / coverage reports
 htmlcov/
