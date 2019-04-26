@@ -1,3 +1,6 @@
 [submodule "PyTorchRL"]
 	path = PyTorchRL
 	url = git@github.com:thoward27/PyTorchRL.git
+[submodule "KerasRL"]
+	path = KerasRL
+	url = git@github.com:thoward27/KerasRL.git
