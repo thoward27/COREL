@@ -4,7 +4,7 @@ from keras.layers import concatenate, Dense, regularizers, LeakyReLU
 from sklearn.preprocessing import StandardScaler
 
 from metrics import actual, predicted
-from source.model import *
+from source.models._model import *
 from source.programs import Programs
 from source.utils import action_to_flags
 

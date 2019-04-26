@@ -6,7 +6,7 @@ from keras.layers import Input, Dense, concatenate, LeakyReLU
 from keras.models import Model
 from sklearn.preprocessing import StandardScaler
 
-from source.model import *
+from source.models._model import *
 from source.programs import Programs
 from source.utils import action_to_flags, flags_to_action
 

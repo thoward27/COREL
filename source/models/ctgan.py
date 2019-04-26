@@ -23,7 +23,7 @@ from sklearn.preprocessing import StandardScaler
 
 import source.utils as u
 from source.metrics import ProgramMetric, log
-from source.model import *
+from source.models._model import *
 from source.programs import Programs
 
 

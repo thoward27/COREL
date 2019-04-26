@@ -17,7 +17,7 @@ from keras.layers import Dense
 
 import source.utils as u
 from source.metrics import log
-from source.model import *
+from source.models._model import *
 from source.programs import Programs
 
 

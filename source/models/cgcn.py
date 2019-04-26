@@ -22,7 +22,7 @@ from keras.layers import Concatenate, Dense, concatenate, LeakyReLU, regularizer
 from sklearn.preprocessing import StandardScaler
 
 from source.metrics import ProgramMetric
-from source.model import *
+from source.models._model import *
 from source.programs import Programs
 from source.utils import action_to_flags, init_run
 
