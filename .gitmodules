@@ -4,6 +4,3 @@
 [submodule "KerasRL"]
 	path = KerasRL
 	url = git@github.com:thoward27/KerasRL.git
-[submodule "cBench"]
-	path = cBench
-	url = git@github.com:thoward27/cBench.git
