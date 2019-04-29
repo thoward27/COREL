@@ -4,3 +4,6 @@
 [submodule "KerasRL"]
 	path = KerasRL
 	url = git@github.com:thoward27/KerasRL.git
+[submodule "Benchmarks"]
+	path = Benchmarks
+	url = git@github.com:thoward27/Benchmarks.git
