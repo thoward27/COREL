@@ -6,7 +6,7 @@ from numpy import argsort
 
 import source.config as c
 import source.utils as u
-from source.programs import Program
+from Benchmarks.program import Program
 
 
 class Metric:
