@@ -1,9 +1,8 @@
-from mlflow import log_param
 from torch import nn
 
+from Benchmarks import Programs
 from PyTorchRL.agents.AlphaZero import AlphaZero
 from source.config import FLAGS
-from source.programs import Programs
 
 STEPS = 10
 
@@ -19,18 +18,17 @@ class AlphaCompile(AlphaZero):
         super().__init__(input_dim, output_dim, body)
 
 
-def train(programs):
+if __name__ == "__main__":
     model = AlphaCompile()
-    for program in programs:
+    programs = Programs()
+    train, test = programs.filter(programs[0])
+    for program in train:
         model.train()
         model.play(program)
 
         model.eval()
         model.play(program)
 
-
-if __name__ == "__main__":
-    log_param("steps", STEPS)
-    programs = Programs()
-    programs = programs.filter(programs[0])
-
+    for program in test:
+        model.eval()
+        model.play(program)

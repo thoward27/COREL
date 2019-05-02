@@ -1,13 +1,5 @@
-""" Settings file.
+""" Basic configurations.
 """
-from enum import Enum
-
-
-class Features(Enum):
-    HYBRID = 0
-    STATIC = 1
-    DYNAMIC = 2
-
 
 EPOCHS = 100
 
@@ -22,4 +14,3 @@ FLAGS = [
     '-O2'
 ]
 N_FLAGS = len(FLAGS)
-
