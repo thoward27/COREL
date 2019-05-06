@@ -1,6 +1,3 @@
-[submodule "PyTorchRL"]
-	path = PyTorchRL
-	url = git@github.com:thoward27/PyTorchRL.git
 [submodule "Benchmarks"]
 	path = Benchmarks
 	url = git@github.com:thoward27/Benchmarks.git
