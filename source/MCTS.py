@@ -64,7 +64,7 @@ def mcts(model: nn.Module, state: Tensor, game, simulations: int = 10):
     tree = [Node(state, a, p.item()) for a, p in enumerate(softmax(policy, dim=0))]
 
     # Traverse to leaf
-    for s in range(simulations):
+    for s in range(1, simulations + 1):
         logging.debug("MCTS # {}, Tree: {}".format(s, [round(t.pr(), 2) for t in tree]))
         node = max(tree)
         flags = [node.action]
