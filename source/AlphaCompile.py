@@ -2,7 +2,7 @@ import logging
 from os.path import join
 from random import shuffle
 
-from torch import save, cuda
+from torch import save, cuda, jit, randn
 
 from Benchmarks import Programs
 from torch.nn.functional import softmax
@@ -52,7 +52,7 @@ class AlphaCompile(nn.Module):
 
             if self.training:
                 # Policy Loss
-                pi = mcts(self, state, deepcopy(program), simulations=2)
+                pi = mcts(self, state, deepcopy(program), simulations=20)
                 policy, v = self.forward(state)
                 loss_policy = self.loss_policy(policy, softmax(torch.tensor([n.w for n in pi]).to(self.device), dim=0))
 
@@ -67,7 +67,7 @@ class AlphaCompile(nn.Module):
                 self.optim.step()
 
                 # MLFlow
-                logging.debug("Action {} got reward {}".format(max(pi).action, round(rew, 2)))
+                logging.debug("Step {}, Action {} got reward {}".format(s, max(pi).action, round(rew, 2)))
                 mlflow.log_metric("Loss", (loss_policy + loss_value).item())
                 mlflow.log_metric(str(program), rew)
                 mlflow.log_metric("Training Value Error", loss_value.item())
@@ -109,3 +109,5 @@ if __name__ == "__main__":
             model.play(program)
         except Exception as e:
             logging.exception("{}: {}".format(repr(program), e), exc_info=True)
+        finally:
+            jit.save(jit.trace(model, (randn(program.observation_space),)), join('source', 'AlphaCompile.pt'))
