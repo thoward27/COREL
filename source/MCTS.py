@@ -1,10 +1,13 @@
+""" Monte Carlo Tree Search for program compilation.
+
+TODO: Save tree in between search calls.
+"""
 import logging
 from copy import deepcopy
 from functools import total_ordering
 
 from math import log, sqrt
 from torch import nn, Tensor
-from torch.nn.functional import softmax
 
 from source.config import FLAGS
 
@@ -21,7 +24,7 @@ class Node:
         self.done: bool = False
 
         self.children: list = []
-        self.n: int = 0
+        self.n: int = 1
         self.w: float = 0
         self.p: float = prior
 
@@ -51,21 +54,21 @@ class Node:
 
     def u(self) -> float:
         try:
-            return (self.c() * self.p * sqrt(self.parent.n)) / (1 + self.n)
+            return (self.c() * self.p * sqrt(self.parent.n)) / self.n
         except AttributeError:
-            return self.p / (1 + self.n)
+            return self.p / self.n
 
 
-def mcts(model: nn.Module, state: Tensor, game, simulations: int = 10):
+def mcts(model: nn.Module, state: Tensor, game, simulations: int):
     # Start from current root
     policy, value = model.forward(state)
-    logging.debug("MCTS Initial Policy: {}".format([round(p.item(), 2) for p in policy]))
+    logging.debug("MCTS Initial Policy: {}".format([round(p.item(), 3) for p in policy]))
 
-    tree = [Node(state, a, p.item()) for a, p in enumerate(softmax(policy, dim=0))]
+    tree = [Node(state, a, p.item()) for a, p in enumerate(policy)]
 
     # Traverse to leaf
     for s in range(1, simulations + 1):
-        logging.debug("MCTS # {}, Tree: {}".format(s, [round(t.pr(), 2) for t in tree]))
+        logging.debug("MCTS # {}, Tree: {}".format(s, [round(t.pr(), 3) for t in tree]))
         node = max(tree)
         flags = [node.action]
         while node.children:

@@ -1,16 +1,22 @@
 import logging
+from copy import deepcopy
 from os.path import join
 from random import shuffle
 
-from torch import save, cuda, jit, randn
+import mlflow
+import numpy as np
+import torch
+from torch import save, cuda, jit, randn, nn, optim, tanh
+from torch.nn.functional import softmax
 
 from Benchmarks import Programs
-from torch.nn.functional import softmax
-from PyTorchRL.agents.AlphaZero import *
+from Benchmarks.cBench.cBench import MEAN, STD
 from source.MCTS import mcts
 from source.config import FLAGS
 
 STEPS = 10
+EPOCHS = 1
+SIMS = 64
 
 
 class AlphaCompile(nn.Module):
@@ -29,7 +35,7 @@ class AlphaCompile(nn.Module):
         self.actions = nn.Linear(hidden, output_dim)
         self.value = nn.Linear(hidden, 1)
 
-        self.optim = optim.RMSprop(self.parameters())
+        self.optim = optim.Adam(self.parameters())
         self.loss_value = nn.MSELoss()
         self.loss_policy = nn.BCEWithLogitsLoss()
 
@@ -40,24 +46,29 @@ class AlphaCompile(nn.Module):
     def forward(self, x):
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x).float()
-        h = self.body(softmax(x.to(self.device), dim=0))
+        x = (x - MEAN) / STD
+        x[x != x] = 0  # Removes NaNs
+        x[x == float('inf')] = 5
+        x[x == float('-inf')] = -5
+        h = self.body(x.to(self.device))
         return softmax(self.actions(h), dim=0), tanh(self.value(h))
 
-    def play(self, program, steps=10, render=False):
+    def play(self, program, steps=10):
         logging.debug("Playing {}".format(program))
         state = program.reset()
         for s in range(steps):
-            if render:
-                program.render()
-
+            pi = mcts(
+                    self, state, deepcopy(program), 
+                    simulations=SIMS if self.train else SIMS // 2)
+            pi = torch.tensor([n.pr() for n in pi])
+            
             if self.training:
                 # Policy Loss
-                pi = mcts(self, state, deepcopy(program), simulations=20)
                 policy, v = self.forward(state)
-                loss_policy = self.loss_policy(policy, softmax(torch.tensor([n.w for n in pi]).to(self.device), dim=0))
+                loss_policy = self.loss_policy(policy, pi.to(self.device))
 
                 # Value Loss
-                state, rew, done, info = program.step(max(pi).action)
+                state, rew, done, info = program.step(torch.argmax(pi).item())
                 loss_value = self.loss_value(v, torch.tensor(rew).to(self.device))
 
                 # Optimizer Step
@@ -67,14 +78,12 @@ class AlphaCompile(nn.Module):
                 self.optim.step()
 
                 # MLFlow
-                logging.debug("Step {}, Action {} got reward {}".format(s, max(pi).action, round(rew, 2)))
+                logging.debug(f"Step {s}, Action {max(pi).action} got reward {rew}")
                 mlflow.log_metric("Loss", (loss_policy + loss_value).item())
                 mlflow.log_metric(str(program), rew)
                 mlflow.log_metric("Training Value Error", loss_value.item())
                 mlflow.log_metric("Training Policy Error", loss_policy.item())
             else:
-                # Calculate best move
-                pi, z = self.forward(state)
                 state, rew, done, info = program.step(torch.argmax(pi).item())
 
                 # MLFlow
@@ -85,22 +94,27 @@ class AlphaCompile(nn.Module):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     programs = Programs()
-    train, test = programs.filter(programs[0])
+    train, test = programs[:65], programs[65:]
     model = AlphaCompile(train[0].observation_space, len(FLAGS) + 1)
     logging.info(model)
 
     model.train()
-    for e in range(10):
+    for e in range(1, EPOCHS + 1):
         shuffle(train)
         for program in train:
             try:
                 model.play(program)
             except Exception as e:
                 logging.exception("{}: {}".format(repr(program), e), exc_info=True)
-            finally:
+                continue
+            except KeyboardInterrupt:
+                save(model.state_dict(), join('source', 'AlphaCompile.pth'))
+                break
+            else:
+                logging.info("Saving the model")
                 save(model.state_dict(), join('source', 'AlphaCompile.pth'))
 
     model.eval()
@@ -109,5 +123,7 @@ if __name__ == "__main__":
             model.play(program)
         except Exception as e:
             logging.exception("{}: {}".format(repr(program), e), exc_info=True)
-        finally:
+            continue
+        else:
             jit.save(jit.trace(model, (randn(program.observation_space),)), join('source', 'AlphaCompile.pt'))
+
