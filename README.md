@@ -5,11 +5,20 @@
 
 This work aims to employee Deep Reinforcement Learning to solve Compiler Optimizing. 
 
+## Currently Implemented
+
+- AlphaCompile with MCTS
+
+## Roadmap (To be implemented in order)
+
+- PPO for Compiler Optmization
+- Genetic Compiler
+
 ### Setup
 
 To run this model clone the repo, create a new virtualenv, install requirements from requirements.txt, enjoy!
 
-### Running the model
+### Running a model
 
 Run any model as follows: `python -m source.<ModelToRun>`
 
